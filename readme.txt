@@ -56,11 +56,11 @@ http://www.videowhisper.com/?p=RTMP+Applications
 * Install and enable billing plugin (myCRED)
 
 == Screenshots ==
-1. Video Messenger application
-2. Performer application view
-3. Client application view
-4. Role selection on signup: performer, client
-5. MyCRED transactions for PPV videochat
+1. Video Messenger application: advanced multi private videochats.
+2. Performer, default application view
+3. Client, default application view
+4. Role selection on signup: performer, client (customizable).
+5. MyCRED transactions for PPV videochat (performer dashboard).
 
 == Desktop Sharing / Screen Broadcasting ==
 If your users want to broadcast their screen (when playing a game, using a program, tutoring various computer skills) they can do that easily just by using a screen sharing driver that simulates a webcam from desktop contents. Read more on http://www.videochat-scripts.com/screen-sharing-with-flash-video-chat-software/ . 
