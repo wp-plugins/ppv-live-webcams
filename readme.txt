@@ -14,6 +14,10 @@ Setup a PPV live webcam videochat site.
 
 == Description ==
 
+Build a turnkey pay per view (PPV) video chat site: This software can be used to build both non adult and adult pay per minute (PPM) videochat sites as it's highly customisable and easy to use. 
+
+Compared to other solutions, this script benefits from power of WordPress, reliability, ease of use, plugins, themes, a large community of experienced developers and designers, high quality coding and security standards.
+
 = Key Features = 
 * Custom registration types: performer, client
 * Webcam custom post type
@@ -23,6 +27,9 @@ Setup a PPV live webcam videochat site.
 * Integration with myCRED plugin for billing
 * Easy setup with shortocodes, pages, menus
 * Public chat access permissions (everybody, members, list)
+* Customisable for a multitude of user interaction and billign scenarios
+* 100% php plugin source code
+* Abides to WP coding and security standards
 
 = Videochat Application Features =
 * private 2 way video chat
@@ -33,12 +40,13 @@ Setup a PPV live webcam videochat site.
 * ppv info and live stats in chat
 * p2p groups support
 * 100% web based for clients
+* multiple parameters configurable from settings
 
 = Special Requirements =
 This plugin has requirements beyond regular WordPress hosting specifications: a supported RTMP host is needed for persistent connections to manage live interactions and streaming. More details about this, including solutions are provided on the Installation section pages.
 
 = Home Page =
-For more online demo, detailed requirements, installation instructions see plugin homepage:
+For online site demos, detailed software requirements, installation and setup instructions see plugin homepage:
 http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 
 
