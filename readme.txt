@@ -50,7 +50,7 @@ For online site demos, detailed software requirements, installation and setup in
 http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 
 = Support & Custom Development =
-VideoWhisper staff can provide support and custom development for this plugin:
+VideoWhisper.com can provide support and custom development for this plugin:
 http://www.videowhisper.com/tickets_submit.php
 
 == Installation ==
