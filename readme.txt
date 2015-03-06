@@ -42,7 +42,7 @@ Compared to other solutions, this script benefits from power of WordPress, relia
 * 100% web based for clients
 * multiple parameters configurable from settings
 
-= Special Requirements =
+= Hosting Requirements =
 This plugin has requirements beyond regular WordPress hosting specifications: a supported RTMP host is needed for persistent connections to manage live interactions and streaming. More details about this, including solutions are provided on the Installation section pages.
 
 = Home Page =
