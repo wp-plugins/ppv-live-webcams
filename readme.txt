@@ -49,6 +49,9 @@ This plugin has requirements beyond regular WordPress hosting specifications: a 
 For online site demos, detailed software requirements, installation and setup instructions see plugin homepage:
 http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 
+= Support & Custom Development =
+VideoWhisper staff can provide support and custom development for this plugin:
+http://www.videowhisper.com/tickets_submit.php
 
 == Installation ==
 * See latest version instructions on plugin homepage:
