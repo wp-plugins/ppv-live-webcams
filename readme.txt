@@ -7,10 +7,10 @@ Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Donate link: http://www.videowhisper.com/?p=Invest
 Tags: ppv, videochat, webcam, cam, chat, video, live, plugin, shortcodes, frontend, backend, videowhisper, video chat
 Requires at least: 2.7
-Tested up to: 4.1.1
+Tested up to: 4.2.2
 Stable tag: trunk
 
-Setup a PPV live webcam videochat site.
+Setup a PPV live webcam videochat site, for performers and clients.
 
 == Description ==
 
@@ -79,6 +79,9 @@ If your users want to broadcast their screen (when playing a game, using a progr
 == Documentation ==
 * Plugin Homepage : http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 * Application Homepage : http://www.videowhisper.com/?p=Video-Messenger
+* Turnkey PPV Cams Site Tutorial: http://www.turnkeyclone.com/ppv-videochat-cams-script/
+* Requirements: http://www.videowhisper.com/?p=Requirements 
+* Recommended Webcam Script Hosting: http://www.videowhisper.com/?p=Wowza+Media+Server+Hosting 
 
 == Demo ==
 * See WordPress integration on:
