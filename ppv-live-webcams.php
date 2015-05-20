@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.3.2
+Version: 1.3.3
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -324,9 +324,10 @@ if (!class_exists("VWliveWebcams"))
 			$postID = get_the_ID();
 			if (get_post_type( $postID ) != $options['custom_post']) return $single_template;
 
-			$single_template = get_template_directory() . '/' . $options['postTemplate'];
+			$single_template_new = get_template_directory() . '/' . $options['postTemplate'];
 
-			return $single_template;
+			if (file_exists($single_template_new)) return $single_template_new;
+			else return $single_template;
 		}
 
 
@@ -1891,13 +1892,18 @@ Configure WordPress integration options.
 
 
 <h4>Webcam Post Name</h4>
-<input name="custom_post" type="text" id="custom_post" size="12" maxlength="32" value="<?php echo $options['custom_post']?>"/>
-<br>Custom post name for webcams. Will be used for webcams url. Ex: webcam
+<input name="custom_post" type="text" id="custom_post" size="12" maxlength="32" value="<?php echo strtolower($options['custom_post'])?>"/>
+<br>Custom post name for webcams (lower case). Will be used for webcams url. Ex: webcam
 
 <h4>Post Template Filename</h4>
 <input name="postTemplate" type="text" id="postTemplate" size="20" maxlength="64" value="<?php echo $options['postTemplate']?>"/>
 <br>Template file located in current theme folder, that should be used to render webcam post page. Ex: page.php, single.php
-
+<br><?php
+				$single_template = get_template_directory() . '/' . $options['postTemplate'];
+				echo $single_template . ' : ';
+				if (file_exists($single_template)) echo 'Found.';
+				else echo 'Not Found! Use another theme file!';
+?>
 
 <h4>Setup Pages</h4>
 <p>Create pages for main functionality. Also creates a menu with these pages (VideoWhisper) that can be added to themes.</p>
@@ -2066,7 +2072,7 @@ myCRED <a href="admin.php?page=myCRED_page_addons">buyCRED addon</a> should be e
 				if (class_exists( 'myCRED_Sell_Content_Module' ) ) echo 'Detected'; else echo 'Not detected. Please install and activate myCRED with <a href="admin.php?page=myCRED_page_addons">Sell Content addon</a>!';
 ?>
 <p>
-myCRED <a href="admin.php?page=myCRED_page_addons">Sell Content addon</a> should be enabled as it's required to enable certain stat shortcodes. Optionally add "<?=$options['custom_post']?>"  to Post Types in <a href="admin.php?page=myCRED_page_settings">Sell Content settings tab</a> so access to webcams can be sold from backend. You can also configure payout to content author from there, if necessary.
+myCRED <a href="admin.php?page=myCRED_page_addons">Sell Content addon</a> should be enabled as it's required to enable certain stat shortcodes. Optionally add "<?php echo $options['custom_post']?>"  to Post Types in <a href="admin.php?page=myCRED_page_settings">Sell Content settings tab</a> so access to webcams can be sold from backend. You can also configure payout to content author from there, if necessary.
 <?php
 				break;
 
