@@ -33,7 +33,7 @@ For more details see [PPV Live Webcams Plugin HomePage](http://www.videowhisper.
 * Customisable for a multitude of user interaction and billign scenarios
 * 100% php plugin source code
 * Abides to WP coding and security standards
-* Archive sessions and import videos with with [Video Share VOD](http://wordpress.org/plugins/video-share-vod/  "Video Share / Video On Demand") WordPress Plugin
+* Archive sessions and import videos with [Video Share VOD](http://wordpress.org/plugins/video-share-vod/  "Video Share / Video On Demand") WordPress Plugin
 
 = Videochat Application Features =
 * private 2 way video chat
