@@ -7,7 +7,7 @@ Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Donate link: http://www.videowhisper.com/?p=Invest
 Tags: ppv, videochat, webcam, cam, chat, video, live, plugin, shortcodes, frontend, backend, videowhisper, video chat
 Requires at least: 2.7
-Tested up to: 4.2.2
+Tested up to: 4.2
 Stable tag: trunk
 
 Setup a PPV live webcam videochat site, for performers and clients.
@@ -17,6 +17,9 @@ Setup a PPV live webcam videochat site, for performers and clients.
 Build a turnkey pay per view (PPV) video chat site: This software can be used to build both non adult and adult pay per minute (PPM) videochat sites as it's highly customisable and easy to use. 
 
 Compared to other solutions, this script benefits from power of WordPress, reliability, ease of use, plugins, themes, a large community of experienced developers and designers, high quality coding and security standards.
+
+For more details see [PPV Live Webcams Plugin HomePage](http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams "PPV Live Webcams Plugin HomePage") and
+[Turnkey PPV Cams Site Tutorial](http://www.turnkeyclone.com/ppv-videochat-cams-script/ "Turnkey PPV Cams Site Tutorial") .
 
 = Key Features = 
 * Custom registration types: performer, client
@@ -30,6 +33,7 @@ Compared to other solutions, this script benefits from power of WordPress, relia
 * Customisable for a multitude of user interaction and billign scenarios
 * 100% php plugin source code
 * Abides to WP coding and security standards
+* Archive sessions and import videos with with [Video Share VOD](http://wordpress.org/plugins/video-share-vod/  "Video Share / Video On Demand") WordPress Plugin
 
 = Videochat Application Features =
 * private 2 way video chat
@@ -74,13 +78,13 @@ http://www.videowhisper.com/?p=RTMP+Applications
 5. MyCRED transactions for PPV videochat (performer dashboard).
 
 == Desktop Sharing / Screen Broadcasting ==
-If your users want to broadcast their screen (when playing a game, using a program, tutoring various computer skills) they can do that easily just by using a screen sharing driver that simulates a webcam from desktop contents. Read more on http://www.videochat-scripts.com/screen-sharing-with-flash-video-chat-software/ . 
+If your users want to broadcast their screen (when playing a game, using a program, tutoring various computer skills) they can do that easily just by using a screen sharing driver that simulates a webcam from desktop contents. Read more on http://www.videochat-scripts.com/screen-sharing-with-flash-video-chat-software/ .
 
 == Documentation ==
 * Plugin Homepage : http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 * Application Homepage : http://www.videowhisper.com/?p=Video-Messenger
 * Turnkey PPV Cams Site Tutorial: http://www.turnkeyclone.com/ppv-videochat-cams-script/
-* Requirements: http://www.videowhisper.com/?p=Requirements 
+* Requirements: http://www.videowhisper.com/?p=Requirements
 * Recommended Webcam Script Hosting: http://www.videowhisper.com/?p=Wowza+Media+Server+Hosting 
 
 == Demo ==
