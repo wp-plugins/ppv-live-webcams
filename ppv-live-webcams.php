@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.3.3
+Version: 1.3.4
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -199,9 +199,13 @@ if (!class_exists("VWliveWebcams"))
 			);
 
 			register_post_type( $options['custom_post'], $args );
-			flush_rewrite_rules();
 		}
 
+		function flush_rewrites()
+		{
+			VWliveWebcams::webcam_post();
+			flush_rewrite_rules();
+		}
 
 		function the_content($content)
 		{
@@ -2095,6 +2099,9 @@ if (class_exists("VWliveWebcams"))
 //Actions and Filters
 if (isset($liveWebcams))
 {
+	register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
+	register_activation_hook( __FILE__, array(&$liveWebcams, 'flush_rewrites'));
+
 	add_action('init', array(&$liveWebcams, 'init'));
 
 	add_action("plugins_loaded", array(&$liveWebcams, 'plugins_loaded'));
