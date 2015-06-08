@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.3.4
+Version: 1.3.5
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -24,6 +24,12 @@ if (!class_exists("VWliveWebcams"))
 			//setup post
 			VWliveWebcams::webcam_post();
 
+		}
+
+		function flush_rewrites()
+		{
+			VWliveWebcams::webcam_post();
+			flush_rewrite_rules();
 		}
 
 		function plugins_loaded()
@@ -201,11 +207,7 @@ if (!class_exists("VWliveWebcams"))
 			register_post_type( $options['custom_post'], $args );
 		}
 
-		function flush_rewrites()
-		{
-			VWliveWebcams::webcam_post();
-			flush_rewrite_rules();
-		}
+
 
 		function the_content($content)
 		{
@@ -1473,9 +1475,9 @@ HTMLCODE;
 			if ($postID) return get_post_permalink($postID);
 		}
 
-		function path2url($file, $Protocol='http://')
+		function path2url($file)
 		{
-			return $Protocol.$_SERVER['HTTP_HOST'].str_replace($_SERVER['DOCUMENT_ROOT'], '', $file);
+			return get_site_url() . '/' . str_replace( get_home_path(), '', $file);
 		}
 
 
@@ -1526,7 +1528,7 @@ HTMLCODE;
 
 <h3>Shortcodes</h3>
 
-<h4>[videowhisper_webcams perPage="6" perrow="0" order_by= "edate" category_id=" select_category="1" select_order="1" select_page="1" include_css="1" url_vars="1" url_vars_fixed="1"]</h4>
+<h4>[videowhisper_webcams perPage="6" perrow="0" order_by= "edate" category_id="" select_category="1" select_order="1" select_page="1" include_css="1" url_vars="1" url_vars_fixed="1"]</h4>
 Lists and updates webcams using AJAX. Allows filtering and toggling filter controls.
 
 <h4>[videowhisper_messenger room="Room Name"]</h4>
@@ -1858,8 +1860,10 @@ required for P2P support.</p>
 <h4>Uploads Path</h4>
 <p>Path where logs and snapshots will be uploaded. Make sure you use a location outside plugin folder to avoid losing logs on updates and plugin uninstallation.</p>
 <input name="uploadsPath" type="text" id="uploadsPath" size="80" maxlength="256" value="<?php echo $options['uploadsPath']?>"/>
-
 			<?php
+				echo '<br>WordPress Path: ' . get_home_path();
+				if (!strstr($options['uploadsPath'], get_home_path() )) echo '<br>Error: Uploaded files are not accessible by web.';
+				echo '<br>WordPress URL: ' . get_site_url();
 				break;
 
 
