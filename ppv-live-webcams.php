@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.3.5
+Version: 1.3.6
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -1530,6 +1530,10 @@ HTMLCODE;
 
 <h4>[videowhisper_webcams perPage="6" perrow="0" order_by= "edate" category_id="" select_category="1" select_order="1" select_page="1" include_css="1" url_vars="1" url_vars_fixed="1"]</h4>
 Lists and updates webcams using AJAX. Allows filtering and toggling filter controls.
+<br>order_by: edate - last time online
+/ post_date - registration
+/ viewers - currently in room
+/ maxViewers - maximum viewers ever
 
 <h4>[videowhisper_messenger room="Room Name"]</h4>
 Shows videochat application. Automatically detects room if shown on webcam post.
@@ -1931,7 +1935,7 @@ Configure WordPress integration options.
 <?php
 				$options['translationCode'] = htmlentities(stripslashes($options['translationCode']));
 ?>
-<textarea name="translationCode" id="translationCode" cols="80" rows="5"><?php echo $options['translationCode']?></textarea>
+<textarea name="translationCode" id="translationCode" cols="100" rows="5"><?php echo $options['translationCode']?></textarea>
 <br>Generate by writing and sending "/videowhisper translation" in chat (contains xml tags with text and translation attributes). Texts are added to list only after being shown once in interface. If any texts don't show up in generated list you can manually add new entries for these. Same translation file is used for interfaces so setting should cumulate all translations.
 
 <h4>Webcam Thumb Width</h4>
@@ -1943,6 +1947,11 @@ Configure WordPress integration options.
 <h4>Default Webcams Per Page</h4>
 <input name="perPage" type="text" id="perPage" size="3" maxlength="3" value="<?php echo $options['perPage']?>"/>
 
+<h4>AJAX Listings CSS</h4>
+<?php
+				$options['customCSS'] = htmlentities(stripslashes($options['customCSS']));
+?>
+<textarea name="customCSS" id="customCSS" cols="100" rows="8"><?php echo $options['customCSS']?></textarea>
 
 	 <?php
 				break;
@@ -2032,8 +2041,8 @@ Configure WordPress integration options.
 
 <h4>Performer Earning Ratio</h4>
 <p>Performer receives this ratio from client charge.</p>
-<input name="ppvRatio" type="text" id="ppvRatio" size="10" maxlength="16" value="<?php echo $options['ppvRatio']?>"/>s
-<br>Ex: 0.8; Set 0 to disable.
+<input name="ppvRatio" type="text" id="ppvRatio" size="10" maxlength="16" value="<?php echo $options['ppvRatio']?>"/>
+<br>Ex: 0.8; Set 0 to disable. Set 1 for performer to get full amount paid by client.
 
 <h4>Minimum Balance</h4>
 <p>Only clients that have a minimum balance can request private shows.</p>
