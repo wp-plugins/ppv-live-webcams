@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.3.6
+Version: 1.4.1
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -351,8 +351,10 @@ if (!class_exists("VWliveWebcams"))
 					'perrow' => '',
 					'order_by' => 'edate',
 					'category_id' => '',
+					'pstatus' => '',
 					'select_category' => '1',
 					'select_order' => '1',
+					'select_status' => '1',
 					'select_page' => '1',
 					'include_css' => '1',
 					'url_vars' => '1',
@@ -375,7 +377,7 @@ if (!class_exists("VWliveWebcams"))
 			}
 
 			//ajax url
-			$ajaxurl = admin_url() . 'admin-ajax.php?action=vmls_cams&pp=' . $atts['perPage']. '&pr=' . $atts['perrow'] . '&ob=' . $atts['order_by'] . '&cat=' . $atts['category_id'] . '&sc=' . $atts['select_category'] . '&so=' . $atts['select_order'] . '&sp=' . $atts['select_page']. '&id=' .$id;
+			$ajaxurl = admin_url() . 'admin-ajax.php?action=vmls_cams&pp=' . $atts['perPage']. '&pr=' . $atts['perrow'] . '&ob=' . $atts['order_by'] . '&cat=' . $atts['category_id'] . '&st=' . $atts['pstatus'] . '&sc=' . $atts['select_category'] . '&so=' . $atts['select_order'] . '&ss=' . $atts['select_status'] . '&sp=' . $atts['select_page']. '&id=' .$id;
 
 			if ($atts['ban']) $ajaxurl .= '&ban=' . $atts['ban'];
 
@@ -496,6 +498,7 @@ HTMLCODE;
 			//maxViewers n
 			//maxDate s
 			//hasSnapshot 1
+			//privateShow 0
 
 			$options = get_option('VWliveWebcamsOptions');
 
@@ -516,6 +519,7 @@ HTMLCODE;
 
 			//
 			$category = (int) $_GET['cat'];
+			$pstatus =  sanitize_file_name($_GET['st']);
 
 			//order
 			$order_by = sanitize_file_name($_GET['ob']);
@@ -525,6 +529,7 @@ HTMLCODE;
 			$selectCategory = (int) $_GET['sc'];
 			$selectOrder = (int) $_GET['so'];
 			$selectPage = (int) $_GET['sp'];
+			$selectStatus = (int) $_GET['ss'];
 
 			//output clean
 			ob_clean();
@@ -532,7 +537,7 @@ HTMLCODE;
 			//thumbs dir
 			$dir = $options['uploadsPath']. "/_thumbs";
 
-			$ajaxurl = admin_url() . 'admin-ajax.php?action=vmls_cams&pp=' . $perPage .  '&pr=' .$perRow. '&sc=' . $selectCategory . '&so=' . $selectOrder . '&sp=' . $selectPage .  '&id=' . $id;
+			$ajaxurl = admin_url() . 'admin-ajax.php?action=vmls_cams&pp=' . $perPage .  '&pr=' . $perRow . '&ss=' . $selectStatus . '&sc=' . $selectCategory . '&so=' . $selectOrder . '&sp=' . $selectPage .  '&id=' . $id;
 			if ($ban) $ajaxurl .= '&ban=' . $ban; //admin side
 
 
@@ -544,6 +549,24 @@ HTMLCODE;
 			$ajaxurlCO = $ajaxurl . '&cat=' . $category . '&ob='.$order_by ;
 
 			echo '<div class="videowhisperListOptions">';
+
+			if ($selectStatus)
+			{
+				echo '<div class="videowhisperDropdown"><select class="videowhisperSelect" id="pstatus' . $id . '" name="pstatus' . $id . '" onchange="aurl' . $id . '=\'' . $ajaxurlCO .'&st=\'+ this.value; loadWebcams' . $id . '(\'Filtering webcams..\')">';
+
+				echo '<option value=""' . ($pstatus == ''?' selected':'') . '>' . __('All', 'livestreaming') . '</option>';
+
+				echo '<option value="online"' . ($pstatus == 'online'?' selected':'') . '>' . __('Online', 'livestreaming') . '</option>';
+
+				echo '<option value="available"' . ($pstatus == 'available'?' selected':'') . '>' . __('Available', 'livestreaming') . '</option>';
+
+				echo '<option value="private"' . ($pstatus == 'private'?' selected':'') . '>' . __('In Private', 'livestreaming') . '</option>';
+
+				echo '<option value="offline"' . ($pstatus == 'offline'?' selected':'') . '>' . __('Offline', 'livestreaming') . '</option>';
+
+				echo '</select></div>';
+
+			}
 
 			if ($selectCategory)
 			{
@@ -565,6 +588,8 @@ HTMLCODE;
 
 				echo '<option value="maxViewers"' . ($order_by == 'maxViewers'?' selected':'') . '>' . __('Maximum Viewers', 'livestreaming') . '</option>';
 
+				echo '<option value="rand"' . ($order_by == 'rand'?' selected':'') . '>' . __('Random', 'livestreaming') . '</option>';
+
 				echo '</select></div>';
 
 			}
@@ -584,17 +609,49 @@ HTMLCODE;
 				)
 			);
 
-			if ($order_by != 'post_date')
+			if (!$pstatus) $pstatus = '';
+
+			switch ($pstatus)
 			{
-				$args['orderby'] = 'meta_value_num';
-				$args['meta_key'] = $order_by;
-			}
-			else
-			{
-				$args['orderby'] = 'post_date';
+				case 'private':
+				$args['meta_query'][] = array('key' => 'privateShow', 'value' => '1');
+				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
+				break;
+
+				case 'online':
+				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
+				break;
+
+				case 'available':
+				$args['meta_query'][] = array('key' => 'privateShow', 'value' => '0');
+				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
+				break;
+
+				case 'offline':
+				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '<');
+				break;
 			}
 
+			switch ($order_by)
+			{
+				case 'post_date':
+					$args['orderby'] = 'post_date';
+				break;
+
+				case 'rand':
+				$args['orderby'] = 'rand';
+				break;
+
+				default:
+						$args['orderby'] = 'meta_value_num';
+						$args['meta_key'] = $order_by;
+				break;
+			}
+
+
+
 			if ($category)  $args['category'] = $category;
+
 
 			$postslist = get_posts( $args );
 
@@ -611,7 +668,7 @@ HTMLCODE;
 						$age = VWliveWebcams::format_age(time() -  $edate);
 					$name = sanitize_file_name($item->post_title);
 
-					if ($ban) $banLink = '<a class = "button" href="admin.php?page=live-webcams&ban=' . urlencode( $name ) . '">Ban This Webcam</a><br>';
+					if ($ban) $banLink = '<a class = "button" href="admin.php?page=live-webcams&ban=' . urlencode( $name ) . '">' . __('Ban This Webcam', 'videosharevod') . '</a><br>';
 
 					echo '<div class="videowhisperWebcam">';
 					echo '<div class="videowhisperTitle">' . $name  . '</div>';
@@ -1167,6 +1224,7 @@ HTMLCODE;
 
 
 				$table_name = $wpdb->prefix . "vw_vmls_sessions";
+				$table_name4 = $wpdb->prefix . "vw_vmls_private";
 
 
 				//performer ?
@@ -1190,12 +1248,20 @@ HTMLCODE;
 					update_post_meta($postID, 'onlineTime', $dS + $onlineTime);
 
 					//update viewers
-					$viewers =  $wpdb->get_results("SELECT count(id) as no FROM `$table_name` where status='1' and type='1' and room='" . $r . "'");
-					update_post_meta($pid, 'viewers', $viewers);
+					$viewers =  $wpdb->get_var("SELECT count(id) as no FROM `$table_name` where status='1' and type='1' and room='" . $r . "'");
+					update_post_meta($postID, 'viewers', $viewers);
+
+					//update show status
+					$shows =  $wpdb->get_var("SELECT count(id) as no FROM `$table_name4` where status='0' and room='" . $r . "' and pid='" . $current_user->ID . "'");
+					if ($shows) $shows =1; else $shows = 0;
+					update_post_meta($postID, 'privateShow', $shows);
+
+					//var_dump($shows);
+					$debug = '--' . $shows;
 
 				}
 				else
-				{
+				{ //client
 
 					//update viewers online
 					$sql = "SELECT * FROM $table_name where session='$s' and status='1'";
@@ -1212,7 +1278,7 @@ HTMLCODE;
 						$wpdb->query($sql);
 					}
 
-					$viewers =  $wpdb->get_results("SELECT count(id) as no FROM `$table_name` where status='1' and type='1' and room='" . $r . "'");
+					$viewers =  $wpdb->get_var("SELECT count(id) as no FROM `$table_name` where status='1' and type='1' and room='" . $r . "'");
 
 					update_post_meta($postID, 'viewers', $viewers);
 					$maxViewers = get_post_meta($postID, 'maxViewers', true);
@@ -1227,7 +1293,7 @@ HTMLCODE;
 				$maximumSessionTime = 0;
 
 
-				?>timeTotal=<?php echo $maximumSessionTime?>&timeUsed=<?php echo $currentTime?>&lastTime=<?php echo $currentTime?>&disconnect=<?php echo $disconnect?>&loadstatus=1<?php
+				?>timeTotal=<?php echo $maximumSessionTime?>&timeUsed=<?php echo $currentTime?>&lastTime=<?php echo $currentTime?>&disconnect=<?php echo $disconnect?>&d=<?php echo $debug?>&loadstatus=1<?php
 
 				break;
 
@@ -1528,12 +1594,20 @@ HTMLCODE;
 
 <h3>Shortcodes</h3>
 
-<h4>[videowhisper_webcams perPage="6" perrow="0" order_by= "edate" category_id="" select_category="1" select_order="1" select_page="1" include_css="1" url_vars="1" url_vars_fixed="1"]</h4>
+<h4>[videowhisper_webcams perPage="6" perrow="0" pstatus="" order_by= "edate" category_id="" select_status="" select_category="1" select_order="1" select_page="1" include_css="1" url_vars="1" url_vars_fixed="1"]</h4>
 Lists and updates webcams using AJAX. Allows filtering and toggling filter controls.
-<br>order_by: edate - last time online
-/ post_date - registration
-/ viewers - currently in room
-/ maxViewers - maximum viewers ever
+<br>order_by: edate = last time online (default)
+/ post_date = registration
+/ viewers = currently in room
+/ maxViewers = maximum viewers ever
+/ rand = Random order
+<br>pstatus: = all performers (default)
+/ online = online
+/ available = available (online and not in private)
+/ private = in private shows
+/ offline = currently offline
+<br>select_ .. : 0/1 (enables interface to select that control)
+<br> perPage : number of listings to show per page (if select_page="0" that's maximum that will show)
 
 <h4>[videowhisper_messenger room="Room Name"]</h4>
 Shows videochat application. Automatically detects room if shown on webcam post.

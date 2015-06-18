@@ -5,7 +5,7 @@ Author URI: http://www.videowhisper.com
 Plugin Name: PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Donate link: http://www.videowhisper.com/?p=Invest
-Tags: ppv, videochat, webcam, cam, chat, video, live, plugin, shortcodes, frontend, backend, videowhisper, video chat
+Tags: ppv, videochat, webcam, cam, chat, video, live, plugin, shortcodes, frontend, backend, videowhisper, video chat, pay per minute
 Requires at least: 2.7
 Tested up to: 4.2
 Stable tag: trunk
@@ -25,12 +25,13 @@ For more details see [PPV Live Webcams Plugin HomePage](http://www.videowhisper.
 * Custom registration types: performer, client
 * Webcam custom post type
 * AJAX webcams list
+* Shortcode to list performers, filter by status/category, order
 * Public and private ppv videochat
 * PPV settings (cost per minute, grace time)
 * Integration with myCRED plugin for billing
 * Easy setup with shortocodes, pages, menus
 * Public chat access permissions (everybody, members, list)
-* Customisable for a multitude of user interaction and billign scenarios
+* Customisable for a multitude of user interaction and billing scenarios
 * 100% php plugin source code
 * Abides to WP coding and security standards
 * Archive sessions and import videos with [Video Share VOD](http://wordpress.org/plugins/video-share-vod/  "Video Share / Video On Demand") WordPress Plugin
@@ -98,3 +99,9 @@ More information, the latest updates, other plugins and non-WordPress editions c
 
 = 1.0 =
 * Integrates VideoWhisper Video Messenger
+
+= 1.3 =
+* Multiple improvements and fixes
+
+= 1.4 =
+* More listing and filtering options
