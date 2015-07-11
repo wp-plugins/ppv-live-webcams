@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.4.1
+Version: 1.4.3
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -558,7 +558,7 @@ HTMLCODE;
 
 				echo '<option value="online"' . ($pstatus == 'online'?' selected':'') . '>' . __('Online', 'livestreaming') . '</option>';
 
-				echo '<option value="available"' . ($pstatus == 'available'?' selected':'') . '>' . __('Available', 'livestreaming') . '</option>';
+				echo '<option value="public"' . ($pstatus == 'public'?' selected':'') . '>' . __('Public', 'livestreaming') . '</option>';
 
 				echo '<option value="private"' . ($pstatus == 'private'?' selected':'') . '>' . __('In Private', 'livestreaming') . '</option>';
 
@@ -622,7 +622,7 @@ HTMLCODE;
 				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
 				break;
 
-				case 'available':
+				case 'public':
 				$args['meta_query'][] = array('key' => 'privateShow', 'value' => '0');
 				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
 				break;
@@ -1560,14 +1560,32 @@ HTMLCODE;
 
 		//! Admin Side
 
-		function adminMenu() {
+		function admin_menu() {
 
 			add_menu_page('Live Webcams', 'Live Webcams', 'manage_options', 'live-webcams', array('VWliveWebcams', 'adminOptions'), 'dashicons-video-alt2',83);
 
 			add_submenu_page("live-webcams", "Live Webcams", "Settings", 'manage_options', "live-webcams", array('VWliveWebcams', 'adminOptions'));
 			add_submenu_page("live-webcams", "Live Webcams", "Documentation", 'manage_options', "live-webcams-doc", array('VWliveWebcams', 'adminDocs'));
 
+			//hide add submenu
+			$options = get_option('VWliveWebcamsOptions');
+			global $submenu;
+			unset($submenu['edit.php?post_type=' . $options['custom_post']][10]);
 		}
+
+		function admin_head() {
+
+			$options = get_option('VWliveWebcamsOptions');
+			if( get_post_type() != $options['custom_post']) return;
+
+			//hide add button
+			echo '<style type="text/css">
+    #favorite-actions {display:none;}
+    .add-new-h2{display:none;}
+    .tablenav{display:none;}
+    </style>';
+		}
+
 
 		function settings_link($links) {
 			$settings_link = '<a href="admin.php?page=live-webcams">'.__("Settings").'</a>';
@@ -1601,9 +1619,9 @@ Lists and updates webcams using AJAX. Allows filtering and toggling filter contr
 / viewers = currently in room
 / maxViewers = maximum viewers ever
 / rand = Random order
-<br>pstatus: = all performers (default)
-/ online = online
-/ available = available (online and not in private)
+<br>pstatus: "" = all performers (default)
+/ online = online (in public or private chat)
+/ public = in public chat (online and not in private)
 / private = in private shows
 / offline = currently offline
 <br>select_ .. : 0/1 (enables interface to select that control)
@@ -1812,6 +1830,7 @@ table, .videowhisperTable {
     color: #eee;
     background: #556570;
     width: 240px;
+    margin: 2px;
 }
 
 .videowhisperSelect {
@@ -2192,7 +2211,8 @@ if (isset($liveWebcams))
 	add_action('init', array(&$liveWebcams, 'init'));
 
 	add_action("plugins_loaded", array(&$liveWebcams, 'plugins_loaded'));
-	add_action('admin_menu', array(&$liveWebcams, 'adminMenu'));
+	add_action('admin_menu', array(&$liveWebcams, 'admin_menu'));
+	add_action('admin_head', array(&$liveWebcams, 'admin_head'));
 
 	add_action('register_form', array(&$liveWebcams,'register_form'));
 	add_action('user_register', array(&$liveWebcams,'user_register'));
