@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.4.3
+Version: 1.5.1
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -46,6 +46,16 @@ if (!class_exists("VWliveWebcams"))
 			add_filter("the_content", array('VWliveWebcams','the_content'));
 			add_filter('pre_get_posts', array('VWliveWebcams','pre_get_posts'));
 
+			//admin webcam posts
+			add_filter('manage_' . $options['custom_post'] . '_posts_columns', array( 'VWliveWebcams', 'columns_head_webcam') , 10);
+			add_filter( 'manage_edit-' . $options['custom_post'] . '_sortable_columns', array('VWliveWebcams', 'columns_register_sortable') );
+			add_action('manage_' . $options['custom_post'] . '_posts_custom_column', array( 'VWliveWebcams', 'columns_content_webcam') , 10, 2);
+			add_filter( 'request', array('VWliveWebcams', 'duration_column_orderby') );
+
+			add_action( 'quick_edit_custom_box', array( 'VWliveWebcams', 'quick_edit_custom_box'), 10, 2 );
+			add_action( 'save_post', array( 'VWliveWebcams', 'save_post') );
+
+
 			//shortcodes
 			add_shortcode('videowhisper_webcams', array( 'VWliveWebcams', 'videowhisper_webcams'));
 			add_shortcode('videowhisper_webcams_performer', array( 'VWliveWebcams', 'videowhisper_webcams_performer'));
@@ -59,19 +69,23 @@ if (!class_exists("VWliveWebcams"))
 			add_action( 'wp_ajax_vmls_cams', array('VWliveWebcams','vmls_cams_callback') );
 			add_action( 'wp_ajax_nopriv_vmls_cams', array('VWliveWebcams','vmls_cams_callback') );
 
+
+
+
 			//sql fast session processing tables
 			//check db
 			$vmls_db_version = "1.2";
 
-			global $wpdb;
-
-			$table_name = $wpdb->prefix . "vw_vmls_sessions";
-			$table_name4 = $wpdb->prefix . "vw_vmls_private";
 
 			$installed_ver = get_option( "vmls_db_version" );
 
 			if( $installed_ver != $vmls_db_version )
 			{
+				global $wpdb;
+
+				$table_name = $wpdb->prefix . "vw_vmls_sessions";
+				$table_name4 = $wpdb->prefix . "vw_vmls_private";
+
 				$wpdb->flush();
 
 				$sql = "DROP TABLE IF EXISTS `$table_name`;
@@ -229,12 +243,15 @@ if (!class_exists("VWliveWebcams"))
 			//only if file exists and missing post thumb
 			if ( file_exists($thumbFilename) && !get_post_thumbnail_id( $postID ))
 			{
+
+				VWliveWebcams::delete_associated_media($postID, false);
+
 				$wp_filetype = wp_check_filetype(basename($thumbFilename), null );
 
 				$attachment = array(
 					'guid' => $thumbFilename,
 					'post_mime_type' => $wp_filetype['type'],
-					'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $thumbFilename, ".jpg" ) ),
+					'post_title' => $stream,
 					'post_content' => '',
 					'post_status' => 'inherit'
 				);
@@ -287,6 +304,134 @@ if (!class_exists("VWliveWebcams"))
 			return $query;
 		}
 
+
+		function columns_head_webcam($defaults) {
+			$defaults['featured_image'] = 'Snapshot';
+			$defaults['edate'] = 'Last Online';
+			$defaults['vw_costPerMinute'] = 'Custom CPM';
+
+			return $defaults;
+		}
+
+		function columns_register_sortable( $columns ) {
+			$columns['edate'] = 'edate';
+
+			return $columns;
+		}
+
+
+		function columns_content_webcam($column_name, $post_id)
+		{
+
+			if ($column_name == 'featured_image')
+			{
+
+				$options = get_option('VWliveWebcamsOptions');
+
+				global $wpdb;
+				$postName = $wpdb->get_var( "SELECT post_name FROM $wpdb->posts WHERE ID = '" . $post_id . "' and post_type='" . $options['custom_post'] . "' LIMIT 0,1" );
+
+				if ($postName)
+				{
+					$options = get_option('VWliveWebcamsOptions');
+					$dir = $options['uploadsPath']. "/_thumbs";
+					$thumbFilename = "$dir/" . $postName . ".jpg";
+
+					$url = VWliveWebcams::roomURL($postName);
+
+					if (file_exists($thumbFilename)) echo '<a href="' . $url . '"><IMG src="' . VWliveWebcams::path2url($thumbFilename) .'" width="' . $options['thumbWidth'] . 'px" height="' . $options['thumbHeight'] . 'px"></a>';
+
+				}
+
+
+
+			}
+
+			if ($column_name == 'edate')
+			{
+				$edate = get_post_meta($post_id, 'edate', true);
+				if ($edate)
+				{
+					echo ' ' . VWliveWebcams::format_age(time() - $edate);
+
+				}
+
+
+			}
+
+			if ($column_name == 'vw_costPerMinute')
+			{
+				echo  get_post_meta($post_id, 'vw_costPerMinute', true);
+			}
+
+		}
+
+		function duration_column_orderby( $vars ) {
+			if ( isset( $vars['orderby'] ) && 'edate' == $vars['orderby'] ) {
+				$vars = array_merge( $vars, array(
+						'meta_key' => 'edate',
+						'orderby' => 'meta_value_num'
+					) );
+			}
+
+			return $vars;
+		}
+
+
+		function quick_edit_custom_box( $column_name, $post_type ) {
+
+			$options = get_option('VWliveWebcamsOptions');
+
+			static $printNonce = TRUE;
+			if ( $printNonce ) {
+				$printNonce = FALSE;
+				wp_nonce_field( plugin_basename( __FILE__ ),  $options['custom_post'] . '_edit_nonce' );
+			}
+
+?>
+    <fieldset class="inline-edit-col-right inline-edit-book">
+      <div class="inline-edit-col column-<?php echo $column_name; ?>">
+        <label class="inline-edit-group">
+        <?php
+			switch ( $column_name ) {
+			case 'vw_costPerMinute':
+				?><span class="title">Custom CPM</span><input name="vw_costPerMinute"/><?php
+				break;
+			}
+?>
+        </label>
+      </div>
+    </fieldset>
+    <?php
+		}
+
+		function save_post( $post_id ) {
+			/* in production code, $slug should be set only once in the plugin,
+       preferably as a class property, rather than in each function that needs it.
+     */
+
+			$options = get_option('VWliveWebcamsOptions');
+
+			$slug = $options['custom_post'];
+
+			if ( $slug !== $_POST['post_type'] ) {
+				return;
+			}
+			if ( !current_user_can( 'edit_post', $post_id ) ) {
+				return;
+			}
+			$_POST += array("{$slug}_edit_nonce" => '');
+			if ( !wp_verify_nonce( $_POST["{$slug}_edit_nonce"],
+					plugin_basename( __FILE__ ) ) )
+			{
+				return;
+			}
+
+			if ( isset( $_REQUEST['vw_costPerMinute'] ) ) {
+				update_post_meta( $post_id, 'vw_costPerMinute', $_REQUEST['vw_costPerMinute'] );
+			}
+
+		}
 		function webcamPost()
 		{
 			$options = get_option('VWliveWebcamsOptions');
@@ -488,6 +633,7 @@ HTMLCODE;
 			return $htmlCode;
 		}
 
+		//! ajax webcams list
 		function vmls_cams_callback()
 		{
 			//ajax called
@@ -613,38 +759,38 @@ HTMLCODE;
 
 			switch ($pstatus)
 			{
-				case 'private':
+			case 'private':
 				$args['meta_query'][] = array('key' => 'privateShow', 'value' => '1');
 				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
 				break;
 
-				case 'online':
+			case 'online':
 				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
 				break;
 
-				case 'public':
+			case 'public':
 				$args['meta_query'][] = array('key' => 'privateShow', 'value' => '0');
 				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '>');
 				break;
 
-				case 'offline':
+			case 'offline':
 				$args['meta_query'][] = array('key' => 'edate', 'value' => time()-30, 'compare' => '<');
 				break;
 			}
 
 			switch ($order_by)
 			{
-				case 'post_date':
-					$args['orderby'] = 'post_date';
+			case 'post_date':
+				$args['orderby'] = 'post_date';
 				break;
 
-				case 'rand':
+			case 'rand':
 				$args['orderby'] = 'rand';
 				break;
 
-				default:
-						$args['orderby'] = 'meta_value_num';
-						$args['meta_key'] = $order_by;
+			default:
+				$args['orderby'] = 'meta_value_num';
+				$args['meta_key'] = $order_by;
 				break;
 			}
 
@@ -674,14 +820,18 @@ HTMLCODE;
 					echo '<div class="videowhisperTitle">' . $name  . '</div>';
 					echo '<div class="videowhisperTime">' . $banLink . $age . '</div>';
 
-					$thumbFilename = "$dir/" . $name . ".jpg";
+					$attach_id = get_post_thumbnail_id($item->ID);
+					if ($attach_id) $thumbFilename = get_attached_file($attach_id);
+
+					//if (!$thumbFilename) $thumbFilename = "$dir/" . $name . ".jpg";
+
 					$url = VWliveWebcams::roomURL($name);
 
 					$noCache = '';
 					if ($age=='LIVE') $noCache='?'.((time()/10)%100);
 
 					if (file_exists($thumbFilename)) echo '<a href="' . $url . '"><IMG src="' . VWliveWebcams::path2url($thumbFilename) . $noCache .'" width="' . $options['thumbWidth'] . 'px" height="' . $options['thumbHeight'] . 'px"></a>';
-					else echo '<a href="' . $url . '"><IMG SRC="' . plugin_dir_url(__FILE__). 'no-picture.jpg" width="' . $options['thumbWidth'] . 'px" height="' . $options['thumbHeight'] . 'px"></a>';
+					else echo '<a href="' . $url . '"><IMG SRC="' . plugin_dir_url(__FILE__). 'no-picture.png" width="' . $options['thumbWidth'] . 'px" height="' . $options['thumbHeight'] . 'px"></a>';
 					echo "</div>";
 
 				}
@@ -701,10 +851,103 @@ HTMLCODE;
 			die();
 		}
 
+		//if any element from array1 in array2
 		function any_in_array($array1, $array2)
 		{
 			foreach ($array1 as $value) if (in_array($value,$array2)) return true;
 				return false;
+		}
+
+		//if any key matches any listing (csv); for
+		function inList($keys, $data)
+		{
+			if (!$keys) return 0;
+			if (!$data) return 0;
+			if (strtolower(trim($data)) == 'all') return 1;
+			if (strtolower(trim($data)) == 'none') return 0;
+
+			$list=explode(",", strtolower(trim($data)));
+			if (in_array('all', $list)) return 1;
+
+			foreach ($keys as $key)
+				foreach ($list as $listing)
+					if ( strtolower(trim($key)) == trim($listing) ) return 1;
+
+					return 0;
+		}
+
+		function getCurrentURL()
+		{
+			$currentURL = (@$_SERVER["HTTPS"] == "on") ? "https://" : "http://";
+			$currentURL .= $_SERVER["SERVER_NAME"];
+
+			if($_SERVER["SERVER_PORT"] != "80" && $_SERVER["SERVER_PORT"] != "443")
+			{
+				$currentURL .= ":".$_SERVER["SERVER_PORT"];
+			}
+
+			$uri_parts = explode('?', $_SERVER['REQUEST_URI'], 2);
+
+			$currentURL .= $uri_parts[0];
+			return $currentURL;
+		}
+
+		//! room features
+		function roomFeatures()
+		{
+			return array(
+				'costPerMinute' => array(
+					'name'=>'Cost per Minute',
+					'description' =>'Can specify cost per minute for private shows.',
+					'installed' => 1,
+					'default' => 'All'),
+				'uploadPicture' => array(
+					'name'=>'Upload Room Picture',
+					'description' =>'Can upload custom room picture.',
+					'installed' => 1,
+					'default' => 'All'),
+				'roomDescription' => array(
+					'name'=>'Room Description',
+					'description' =>'Can write description for room (profile, bio, schedule).',
+					'installed' => 1,
+					'default' => 'All'),
+				'accessList' => array(
+					'name'=>'Access List',
+					'description' =>'Can specify list of user logins, roles, emails that can access the room (public chat). If disabled, users can access as configured in Client section.',
+					'installed' => 1,
+					'default' => 'None'),
+				'accessPrice' => array(
+					'name'=>'Access Price',
+					'description' =>'Can setup a price for public room access. Uses myCRED Sell Content addon.',
+					'type' => 'number',
+					'installed' => 1,
+					'default' => 'None'),
+			);
+		}
+
+		function delete_associated_media($id, $unlink=false) {
+
+			$htmlCode .= "Removing... ";
+
+			$media = get_children(array(
+					'post_parent' => $id,
+					'post_type' => 'attachment'
+				));
+			if (empty($media)) return $htmlCode;
+
+			foreach ($media as $file) {
+
+				if ($unlink)
+				{
+					$filename = get_attached_file($file->ID);
+					$htmlCode .=  " Removing $filename #" . $file->ID;
+					if (file_exists($filename)) unlink($filename);
+				}
+
+				wp_delete_attachment($file->ID);
+			}
+
+			return $htmlCode;
 		}
 
 
@@ -721,25 +964,233 @@ HTMLCODE;
 
 			$options = get_option('VWliveWebcamsOptions');
 
-			$uid = get_current_user_id();
-			$user = get_userdata($uid);
 
-			if ( ! VWliveWebcams::any_in_array( array( $options['rolePerformer'], 'administrator', 'super admin'), $user->roles))
+			global $current_user;
+			get_currentuserinfo();
+
+			if (!$current_user->ID) return __('Login is required to access this section!','videosharevod');
+
+			//access keys
+			$userkeys = $current_user->roles;
+			$userkeys[] = $current_user->user_login;
+			$userkeys[] = $current_user->ID;
+			$userkeys[] = $current_user->user_email;
+
+			if ( ! VWliveWebcams::any_in_array( array( $options['rolePerformer'], 'administrator', 'super admin'), $current_user->roles))
 				return __('User role does not allow publishing webcams!','videosharevod');
 
 			//get or setup webcam post for this user
-			$pid = VWliveWebcams::webcamPost();
+			$postID = VWliveWebcams::webcamPost();
+			if (!$postID) return 'Failed getting webcam post!';
+
+			$webcamPost = get_post( $postID );
 
 			//process user's sessions to show updated balance
-			VWliveWebcams::billSessions($uid);
+			VWliveWebcams::billSessions($current_user->ID);
 
 			$htmlCode .=  'Your current balance: ' .  VWliveWebcams::balance($uid);
 
-			$htmlCode .= '<br><a class="videowhisperButton" href="' . get_permalink($pid) . '">' . __('Go Live', 'videosharevod') . '</a>';
+			$htmlCode .= '<br><a class="videowhisperButton" href="' . get_permalink($postID) . '">' . __('Go Live', 'videosharevod') . '</a>';
+
+			//FEATURES
+
+			//! edit room
+			if ($_POST['save'])
+			{
+
+				//costPerMinute
+				if (VWliveWebcams::inList($userkeys, $options['costPerMinute']))
+				{
+					$costPerMinute = round($_POST['costPerMinute'],2);
+					update_post_meta($postID, 'vw_costPerMinute', $costPerMinute);
+				}
+
+				//$htmlCode .= 'Upload?'. $_FILES['uploadPicture']['tmp_name'];
+
+				//uploadPicture
+				if (VWliveWebcams::inList($userkeys, $options['uploadPicture']))
+					if ($filename = $_FILES['uploadPicture']['tmp_name'])
+					{
+						//$htmlCode .= 'Processing upload... ';
+
+						$ext = strtolower(pathinfo($_FILES['uploadPicture']['name'], PATHINFO_EXTENSION));
+						$allowed = array('jpg','jpeg','png','gif');
+						if (!in_array($ext,$allowed)) return 'Unsupported file extension!';
+
+						list($width, $height) = getimagesize($filename);
+
+						if ($width && $height)
+						{
+
+							//delete previous image(s)
+							VWliveWebcams::delete_associated_media($postID);
+
+							//$htmlCode .= 'Generating thumb... ';
+							$thumbWidth = $options['thumbWidth'];
+							$thumbHeight = $options['thumbHeight'];
+
+							$src = imagecreatefromstring(file_get_contents($filename));
+							$tmp = imagecreatetruecolor($thumbWidth, $thumbHeight);
+
+							$dir = $options['uploadsPath']. "/_pictures";
+							if (!file_exists($dir)) mkdir($dir);
+
+							$room_name = sanitize_file_name($webcamPost->post_name);
+							$thumbFilename = "$dir/$room_name.jpg";
+							imagecopyresampled($tmp, $src, 0, 0, 0, 0, $thumbWidth, $thumbHeight, $width, $height);
+							imagejpeg($tmp, $thumbFilename, 95);
+
+							//detect tiny images without info
+							if (filesize($thumbFilename)>5000) $picType = 1;
+							else $picType = 2;
+
+							//update post meta
+							if ($postID) update_post_meta($postID, 'hasPicture', $picType);
+
+							//$htmlCode .= ' Updating picture... ' . $thumbFilename;
+
+							//update post image
+							if (!function_exists('wp_generate_attachment_metadata')) require ( ABSPATH . 'wp-admin/includes/image.php' );
+
+							$wp_filetype = wp_check_filetype(basename($thumbFilename), null );
+
+							$attachment = array(
+								'guid' => $thumbFilename,
+								'post_mime_type' => $wp_filetype['type'],
+								'post_title' => $room_name,
+								'post_content' => '',
+								'post_status' => 'inherit'
+							);
+
+							$attach_id = wp_insert_attachment( $attachment, $thumbFilename, $postID );
+							set_post_thumbnail($postID, $attach_id);
+
+							//update post imaga data
+							$attach_data = wp_generate_attachment_metadata( $attach_id, $thumbFilename );
+							wp_update_attachment_metadata( $attach_id, $attach_data );
+
+
+						}
+					}
+
+				//roomDescription
+				if (VWliveWebcams::inList($userkeys, $options['roomDescription']))
+				{
+
+					$roomDescription = sanitize_text_field($_POST['roomDescription']);
+					wp_update_post( array(
+							'ID'           => $postID,
+							'post_content' => $roomDescription,
+						) );
+
+				}
+
+				//accessList
+				if (VWliveWebcams::inList($userkeys, $options['accessList']))
+				{
+					$accessList = sanitize_text_field($_POST['accessList']);
+					update_post_meta($postID, 'vw_accessList', $accessList);
+				}
+
+				//accessPrice
+				if (VWliveWebcams::inList($userkeys, $options['accessPrice']))
+				{
+					$accessPrice = round($_POST['accessPrice'],2);
+					update_post_meta($postID, 'vw_accessPrice', $accessPrice);
+
+					$mCa = array(
+						'status'       => 'enabled',
+						'price'        => $accessPrice,
+						'button_label' => 'Buy Access Now', // default button label
+						'expire'       => 0 // default no expire
+					);
+
+					if ($accessPrice) update_post_meta($postID, 'myCRED_sell_content', $mCa);
+					else delete_post_meta($postID, 'myCRED_sell_content');
+				}
+			}
+
+			//! room preview
+			$attach_id = get_post_thumbnail_id($postID);
+			if ($attach_id) $thumbFilename = get_attached_file($attach_id);
+
+			$url = VWliveWebcams::roomURL($name);
+
+			$noCache='?'.((time()/10)%100);
+
+			$htmlCode .= '<br><br><h4>Profile Preview</h4>';
+
+			if (file_exists($thumbFilename)) $htmlCode .=  '<a href="' . $url . '"><IMG ALIGN="LEFT" src="' . VWliveWebcams::path2url($thumbFilename) . $noCache .'" width="' . $options['thumbWidth'] . 'px" height="' . $options['thumbHeight'] . 'px"></a>';
+			else $htmlCode .=  '<a href="' . $url . '"><IMG ALIGN="LEFT" SRC="' . plugin_dir_url(__FILE__). 'no-picture.png" width="' . $options['thumbWidth'] . 'px" height="' . $options['thumbHeight'] . 'px"></a>';
+
+			$htmlCode .= $webcamPost->post_content;
+
+
+			//! room form
+
+			$featuresCode = '';
+
+			//costPerMinute
+			if (VWliveWebcams::inList($userkeys, $options['costPerMinute']))
+			{
+				if ($postID) $value = get_post_meta( $postID, 'vw_costPerMinute', true );
+				else $value = $options['ppvPPM'];
+
+				if ($value < $options['ppvPPMmin']) $value = $options['ppvPPMmin'];
+				if ($options['ppvPPMmax']) if ($value > $options['ppvPPMmax']) $value = $options['ppvPPMmax'];
+
+				$cpmRange =  'Default: ' . $options['ppvPPM'] .  ' Min: ' . $options['ppvPPMmin'] .  ' Max: ' . $options['ppvPPMmax'];
+
+					$featuresCode .= '<tr><td>Cost Per Minute</td><td><input size=5 name="costPerMinute" id="costPerMinute" value="' . $value . '"><BR>Cost per minute for private shows. '.$cpmRange.'</td></tr>';
+			}
+
+			//uploadPicture
+			if (VWliveWebcams::inList($userkeys, $options['uploadPicture']))
+			{
+
+				$featuresCode .= '<tr><td>Picture</td><td><input type="file" name="uploadPicture" id="uploadPicture"><BR>Room picture to use instead of live snapshot. Leave blank to keep current.</td></tr>';
+			}
+
+			//roomDescription
+			if (VWliveWebcams::inList($userkeys, $options['roomDescription']))
+			{
+
+				$featuresCode .= '<tr><td>Description</td><td><textarea rows=4 name="roomDescription" id="roomDescription">' . htmlspecialchars($webcamPost->post_content) . '</textarea><BR>Room description: profile, schedule.</td></tr>';
+			}
+
+			//accessList
+			if (VWliveWebcams::inList($userkeys, $options['accessList']))
+			{
+				if ($postID) $value = get_post_meta( $postID, 'vw_accessList', true );
+				else $value = '';
+
+				$featuresCode .= '<tr><td>Access List</td><td><textarea rows=2 name="accessList" id="accessList">' . $value . '</textarea><BR>User roles, logins, emails separated by comma. Leave empty to allow everybody to access.</td></tr>';
+			}
+
+			//accessPrice
+			if (VWliveWebcams::inList($userkeys, $options['accessPrice']))
+			{
+				if ($postID) $value = get_post_meta( $postID, 'vw_accessPrice', true );
+				else $value = '';
+
+				$featuresCode .= '<tr><td>Access Price</td><td><input size=5 name="accessPrice" id="accessPrice" value="' . $value . '"><BR>Webcam room access price. Leave 0 for free access.</td></tr>';
+			}
+
+			$this_page    =  VWliveWebcams::getCurrentURL();
+
+			if ($featuresCode) $htmlCode .= <<<HTMLCODE
+<form method="post" enctype="multipart/form-data" action="$this_page" name="adminForm" class="w-actionbox">
+<h4>Room Setup</h4>
+<table class="g-input" width="500px">
+$featuresCode
+<tr><td></td><td><input class="videowhisperButton g-btn type_primary" type="submit" name="save" id="save" value="Save" /></td></tr>
+</table>
+</form>
+HTMLCODE;
 
 			if ($atts['include_css']) $htmlCode .= html_entity_decode(stripslashes($options['customCSS']));
 
-			if (shortcode_exists('mycred_history')) $htmlCode .= '<br><br> <h5>Transactions</h5>[mycred_history user_id="current"]';
+			if (shortcode_exists('mycred_history')) $htmlCode .= '<br><br> <h4>Transactions</h4>[mycred_history user_id="current"]';
 
 			return $htmlCode;
 		}
@@ -938,12 +1389,29 @@ HTMLCODE;
 			if ($wpdb->num_rows>0) foreach ($sessions as $session) VWliveWebcams::billSession($session);
 		}
 
+		function clientCPM($room_name)
+		{
+			$options = get_option('VWliveWebcamsOptions');
+
+			$postID = $wpdb->get_var( $sql = 'SELECT ID FROM ' . $wpdb->posts . ' WHERE post_name = \'' . $room_name . '\' and post_type=\''.$options['custom_post'] . '\' LIMIT 0,1' );
+			if ($postID) $CPM = get_post_meta( $postID, 'vw_costPerMinute', true );
+			else $CPM = $options['ppvPPM'];
+
+			if ($options['ppvPPMmin']) if ($CPM < $options['ppvPPMmin']) $CPM = $options['ppvPPMmin'];
+				if ($options['ppvPPMmax']) if ($CPM > $options['ppvPPMmax']) $CPM = $options['ppvPPMmax'];
+
+					return $CPM;
+		}
+
+
 		function billSession($session)
 		{
 
 			$options = get_option('VWliveWebcamsOptions');
 
-			if (!$options['ppvPerformerPPM'] && !$options['ppvPPM']) return ;
+			$clientCPM = VWliveWebcams::clientCPM($session->room);
+
+			if (!$options['ppvPerformerPPM'] && !$clientCPM) return ;
 			if (!$session) return ;
 			if ($session->pedate == 0 || $session->cedate == 0 ) return 0; //did not enter both
 
@@ -956,10 +1424,10 @@ HTMLCODE;
 			$startDate = ' ' . date(DATE_RFC2822, $start);
 
 			//client cost
-			if ($options['ppvPPM']) VWliveWebcams::transaction('ppv_private', $session->cid, - number_format($duration * $options['ppvPPM'] / 60, 2, '.', ''), 'PPV private session with <a href="' . VWliveWebcams::roomURL($session->room) . '">' . $session->performer.'</a>' , $session->id);
+			if ($clientCPM) VWliveWebcams::transaction('ppv_private', $session->cid, - number_format($duration * $clientCPM / 60, 2, '.', ''), 'PPV private session with <a href="' . VWliveWebcams::roomURL($session->room) . '">' . $session->performer.'</a>' , $session->id);
 
 			//performer earning
-			if ($options['ppvPPM'] && $options['ppvRatio']) VWliveWebcams::transaction('ppv_private_earning', $session->pid, number_format($duration * $options['ppvPPM'] * $options['ppvRatio'] / 60, 2, '.', ''), 'Earning from PPV private session with ' . $session->client , $session->id);
+			if ($clientCPM && $options['ppvRatio']) VWliveWebcams::transaction('ppv_private_earning', $session->pid, number_format($duration * $clientCPM * $options['ppvRatio'] / 60, 2, '.', ''), 'Earning from PPV private session with ' . $session->client , $session->id);
 
 			//performer cost
 			if ($options['ppvPerformerPPM']) VWliveWebcams::transaction('ppv_private', $session->pid, - number_format($duration * $options['ppvPerformerPPM'] / 60, 2, '.', ''), 'Performer cost for PPV private session with ' . $session->performer , $session->id);
@@ -978,7 +1446,9 @@ HTMLCODE;
 		{
 			$options = get_option('VWliveWebcamsOptions');
 
-			if (!$options['ppvPPM']) return 0;
+			$clientCPM = VWliveWebcams::clientCPM($session->room);
+
+			if (!$clientCPM) return 0;
 			if (!$session) return 0;
 			if ($session->pedate == 0 || $session->cedate == 0 ) return 0; //did not enter both
 
@@ -986,7 +1456,7 @@ HTMLCODE;
 			$duration = min($session->pedate, $session->cedate) - max($session->psdate, $session->csdate) - $options['ppvGraceTime'];
 			if ($duration < 0) return 0; //grace
 
-			return number_format($duration*$options['ppvPPM']/60, 2, '.', '');
+			return number_format($duration * $clientCPM / 60, 2, '.', '');
 		}
 
 		function performerCost($session)
@@ -1136,6 +1606,14 @@ HTMLCODE;
 
 					}
 
+					$accessList = get_post_meta($postID, 'vw_accessList', true);
+					if ($accessList) if (!VWliveWebcams::inList($userkeys, $accessList))
+						{
+							$loggedin=0;
+							$msg .= urlencode("Your are not in room access list.");
+						}
+
+
 					$videoDefault = get_post_meta($postID, 'performer', true);
 
 					if ($uid)
@@ -1261,7 +1739,7 @@ HTMLCODE;
 
 				}
 				else
-				{ //client
+					{ //client
 
 					//update viewers online
 					$sql = "SELECT * FROM $table_name where session='$s' and status='1'";
@@ -1543,6 +2021,8 @@ HTMLCODE;
 
 		function path2url($file)
 		{
+			if (!function_exists('get_home_path')) require_once( ABSPATH . '/wp-admin/includes/file.php' );
+
 			return get_site_url() . '/' . str_replace( get_home_path(), '', $file);
 		}
 
@@ -1663,6 +2143,9 @@ Shows performer dashboard with balance, link to access own webcam post (creates 
 
 				'ppvGraceTime' => '30',
 				'ppvPPM' => '0.50',
+				'ppvPPMmin' => '0.10',
+				'ppvPPMmax' => '5.00',
+
 				'ppvRatio' => '0.80',
 				'ppvPerformerPPM' => '0.00',
 				'ppvMinimum' => '1.50',
@@ -1852,7 +2335,10 @@ HTMLCODE
 
 			);
 
-			$options = get_option('VWliveWebcamsOptions');
+			$features = VWliveWebcams::roomFeatures();
+			foreach ($features as $key=>$feature) if ($feature['installed'])  $adminOptions[$key] = $feature['default'];
+
+				$options = get_option('VWliveWebcamsOptions');
 			if (!empty($options)) {
 				foreach ($options as $key => $option)
 					$adminOptions[$key] = $option;
@@ -1886,6 +2372,7 @@ HTMLCODE
 	<a href="admin.php?page=live-webcams&tab=server" class="nav-tab <?php echo $active_tab=='server'?'nav-tab-active':'';?>">Server</a>
 	<a href="admin.php?page=live-webcams&tab=integration" class="nav-tab <?php echo $active_tab=='integration'?'nav-tab-active':'';?>">Integration</a>
 	<a href="admin.php?page=live-webcams&tab=performer" class="nav-tab <?php echo $active_tab=='performer'?'nav-tab-active':'';?>">Performer</a>
+	<a href="admin.php?page=live-webcams&tab=features" class="nav-tab <?php echo $active_tab=='features'?'nav-tab-active':'';?>">Features</a>
 	<a href="admin.php?page=live-webcams&tab=client" class="nav-tab <?php echo $active_tab=='client'?'nav-tab-active':'';?>">Client</a>
 	<a href="admin.php?page=live-webcams&tab=ppv" class="nav-tab <?php echo $active_tab=='ppv'?'nav-tab-active':'';?>">PPV</a>
 	<a href="admin.php?page=live-webcams&tab=billing" class="nav-tab <?php echo $active_tab=='billing'?'nav-tab-active':'';?>">Billing</a>
@@ -2051,7 +2538,7 @@ Configure WordPress integration options.
 
 
 			case 'performer':
-
+				//! Performer Settings
 				$options['layoutCodePerformer'] = htmlentities(stripslashes($options['layoutCodePerformer']));
 				$options['parametersPerformer'] = htmlentities(stripslashes($options['parametersPerformer']));
 				$options['welcomePerformer'] = htmlentities(stripslashes($options['welcomePerformer']));
@@ -2117,8 +2604,27 @@ Configure WordPress integration options.
 <br>Generate by writing and sending "/videowhisper layout" in chat (contains panel positions, sizes, move and resize toggles). Copy and paste code here.
 <?php
 				break;
+			case 'features':
+				//! Webcam Room Features
+?>
+<h3>Webcam Room Features</h3>
+Enable webcam room features, accessible by performer.
+<br>Specify comma separated list of user roles, emails, logins able to setup these features for their rooms.
+<br>Use All to enable for everybody and None or blank to disable.
+<?php
 
+				$features = VWliveWebcams::roomFeatures();
+
+				foreach ($features as $key=>$feature) if ($feature['installed'])
+					{
+						echo '<h3>' . $feature['name'] . '</h3>';
+						echo '<textarea name="'.$key.'" cols="64" rows="2" id="'.$key.'">'.trim($options[$key]).'</textarea>';
+						echo '<br>' . $feature['description'];
+					}
+
+				break;
 			case 'ppv':
+				//! Pay Per View Settings
 ?>
 <h3>Pay Per View Settings</h3>
 
@@ -2131,6 +2637,17 @@ Configure WordPress integration options.
 <p>Paid by client in private video chat.</p>
 <input name="ppvPPM" type="text" id="ppvPPM" size="10" maxlength="16" value="<?php echo $options['ppvPPM']?>"/>
 <br>Ex: 0.5; Set 0 to disable.
+
+<h4>Minimum Pay Per Minute Cost for Client</h4>
+<p>Minimum cost per minute configurable by performer (if permitted).</p>
+<input name="ppvPPMmin" type="text" id="ppvPPMmin" size="10" maxlength="16" value="<?php echo $options['ppvPPMmin']?>"/>
+<br>Ex: 0.1
+
+<h4>Maximum Pay Per Minute Cost for Client</h4>
+<p>Maximum cost per minute configurable by performer (if permitted).</p>
+<input name="ppvPPMmax" type="text" id="ppvPPMmax" size="10" maxlength="16" value="<?php echo $options['ppvPPMmax']?>"/>
+<br>Ex: 5
+
 
 <h4>Performer Earning Ratio</h4>
 <p>Performer receives this ratio from client charge.</p>

@@ -97,11 +97,21 @@ More information, the latest updates, other plugins and non-WordPress editions c
 
 == Changelog ==
 
-= 1.0 =
-* Integrates VideoWhisper Video Messenger
+= 1.5 =
+* Listing filters by status and availability
+* Backend improvements, listings with snapshot, sort by last time online, quick edit Custom CPM
+* Custom features can be enabled for different performer classes and their rooms:
+* Custom show cost per minute (CPM) per room
+* Upload room picture, write description (profile, bio, schedule)
+* Access list per room
+* Access fee per room (one time fee for public access)
+
+= 1.4 =
+* More listing and filtering options
 
 = 1.3 =
 * Multiple improvements and fixes
 
-= 1.4 =
-* More listing and filtering options
+= 1.0 =
+* Integrates VideoWhisper Video Messenger
+
