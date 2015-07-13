@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.5.1
+Version: 1.5.2
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -1139,9 +1139,9 @@ HTMLCODE;
 				if ($value < $options['ppvPPMmin']) $value = $options['ppvPPMmin'];
 				if ($options['ppvPPMmax']) if ($value > $options['ppvPPMmax']) $value = $options['ppvPPMmax'];
 
-				$cpmRange =  'Default: ' . $options['ppvPPM'] .  ' Min: ' . $options['ppvPPMmin'] .  ' Max: ' . $options['ppvPPMmax'];
+					$cpmRange =  'Default: ' . $options['ppvPPM'] .  ' Min: ' . $options['ppvPPMmin'] .  ' Max: ' . $options['ppvPPMmax'];
 
-					$featuresCode .= '<tr><td>Cost Per Minute</td><td><input size=5 name="costPerMinute" id="costPerMinute" value="' . $value . '"><BR>Cost per minute for private shows. '.$cpmRange.'</td></tr>';
+				$featuresCode .= '<tr><td>Cost Per Minute</td><td><input size=5 name="costPerMinute" id="costPerMinute" value="' . $value . '"><BR>Cost per minute for private shows. '.$cpmRange.'</td></tr>';
 			}
 
 			//uploadPicture
@@ -1179,6 +1179,7 @@ HTMLCODE;
 			$this_page    =  VWliveWebcams::getCurrentURL();
 
 			if ($featuresCode) $htmlCode .= <<<HTMLCODE
+<br style="clear:both">
 <form method="post" enctype="multipart/form-data" action="$this_page" name="adminForm" class="w-actionbox">
 <h4>Room Setup</h4>
 <table class="g-input" width="500px">
@@ -1476,6 +1477,36 @@ HTMLCODE;
 
 
 
+		function updateViewers($postID, $room)
+		{
+			global $wpdb;
+			$options = get_option('VWliveWebcamsOptions');
+
+			$table_name = $wpdb->prefix . "vw_vmls_sessions";
+
+			//clean sessions
+			$closeTime = time() - $options['ppvCloseAfter'];
+			$sql="DELETE FROM `$table_name` WHERE edate < $closeTime))";
+			$wpdb->query($sql);
+
+			//close sessions
+			$closeTime = time() - 60;
+			$sql="UPDATE `$table_name` SET status = 2 WHERE edate < $closeTime))";
+			$wpdb->query($sql);
+
+			//update viewers
+			$viewers =  $wpdb->get_var("SELECT count(id) as no FROM `$table_name` where status='1' and type='1' and room='" . $room . "'");
+			update_post_meta($postID, 'viewers', $viewers);
+
+			$maxViewers = get_post_meta($postID, 'maxViewers', true);
+
+			if ($viewers >= $maxViewers)
+			{
+				update_post_meta($postID, 'maxViewers', $viewers);
+				update_post_meta($postID, 'maxDate', time());
+			}
+
+		}
 
 		//! App Calls
 
@@ -1725,9 +1756,7 @@ HTMLCODE;
 					$dS = floor(($currentTime-$lastTime)/1000);
 					update_post_meta($postID, 'onlineTime', $dS + $onlineTime);
 
-					//update viewers
-					$viewers =  $wpdb->get_var("SELECT count(id) as no FROM `$table_name` where status='1' and type='1' and room='" . $r . "'");
-					update_post_meta($postID, 'viewers', $viewers);
+					VWliveWebcams::updateViewers($postID, $r);
 
 					//update show status
 					$shows =  $wpdb->get_var("SELECT count(id) as no FROM `$table_name4` where status='0' and room='" . $r . "' and pid='" . $current_user->ID . "'");
@@ -1756,15 +1785,7 @@ HTMLCODE;
 						$wpdb->query($sql);
 					}
 
-					$viewers =  $wpdb->get_var("SELECT count(id) as no FROM `$table_name` where status='1' and type='1' and room='" . $r . "'");
-
-					update_post_meta($postID, 'viewers', $viewers);
-					$maxViewers = get_post_meta($postID, 'maxViewers', true);
-					if ($viewers >= $maxViewers)
-					{
-						update_post_meta($postID, 'maxViewers', $viewers);
-						update_post_meta($postID, 'maxDate', $ztime);
-					}
+					VWliveWebcams::updateViewers($postID, $r);
 
 				}
 
