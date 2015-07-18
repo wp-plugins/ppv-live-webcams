@@ -54,9 +54,21 @@ This plugin has requirements beyond regular WordPress hosting specifications: a 
 For online site demos, detailed software requirements, installation and setup instructions see plugin homepage:
 http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 
-= Support & Custom Development =
+= Contact, Support & Custom Development =
 VideoWhisper.com can provide support and custom development for this plugin:
 http://www.videowhisper.com/tickets_submit.php
+
+=How it Works=
+Performers join to earn money. They turn on their webcams and hang out in public rooms waiting for members to chat.  Performers are listed on a page (live performers show first) and site visitors can join them.
+
+Paying clients can invite performers to do private video chat shows and pay per minute. They first need to register as clients and add some money to their virtual wallet on site to be able to request private shows.
+
+Payments go from clients to site owner’s account depending on billing gateway (multiple supported).  Site owner can see earnings for each performer and send payments as necessary.
+
+=Billing=
+Clients can prepay credits that can be used for ppv chat. Billing is integrated with myCRED plugin that includes PayPal Standard, Skrill (Moneybookers), NETbilling, Zombaio, BitPay (bitcoin).  Other payment modules are available for extra: 2checkout, ComproPago, CoinBase, CoinPayments, PayFast, Payza, Robokassa, Stripe, WePay.
+
+
 
 == Installation ==
 * See latest version instructions on plugin homepage:

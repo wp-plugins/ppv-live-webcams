@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.5.2
+Version: 1.5.3
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -1134,7 +1134,7 @@ HTMLCODE;
 			if (VWliveWebcams::inList($userkeys, $options['costPerMinute']))
 			{
 				if ($postID) $value = get_post_meta( $postID, 'vw_costPerMinute', true );
-				else $value = $options['ppvPPM'];
+				if ($value == '') $value = $options['ppvPPM'];
 
 				if ($value < $options['ppvPPMmin']) $value = $options['ppvPPMmin'];
 				if ($options['ppvPPMmax']) if ($value > $options['ppvPPMmax']) $value = $options['ppvPPMmax'];
@@ -1396,7 +1396,8 @@ HTMLCODE;
 
 			$postID = $wpdb->get_var( $sql = 'SELECT ID FROM ' . $wpdb->posts . ' WHERE post_name = \'' . $room_name . '\' and post_type=\''.$options['custom_post'] . '\' LIMIT 0,1' );
 			if ($postID) $CPM = get_post_meta( $postID, 'vw_costPerMinute', true );
-			else $CPM = $options['ppvPPM'];
+
+			if ($CPM == '') $CPM = $options['ppvPPM'];
 
 			if ($options['ppvPPMmin']) if ($CPM < $options['ppvPPMmin']) $CPM = $options['ppvPPMmin'];
 				if ($options['ppvPPMmax']) if ($CPM > $options['ppvPPMmax']) $CPM = $options['ppvPPMmax'];
@@ -1650,10 +1651,16 @@ HTMLCODE;
 					if ($uid)
 					{
 						$welcome .= '<BR>' . 'Your current balance:' . ' ' . $balance;
-						if ($options['ppvPPM']) $welcome .= '<BR>' . 'Private show cost per minute is:' . ' ' . $options['ppvPPM'];
+
+						$CPM = get_post_meta( $postID, 'vw_costPerMinute', true );
+						if ($CPM == '') $CPM = $options['ppvPPM'];
+
+						if ($CPM) $welcome .= '<BR>' . 'Private show cost per minute is:' . ' ' . $CPM;
+
 					}
 
-					if ($uid) if ($options['ppvMinimum'] && $options['ppvPPM'])
+					if ($uid)
+						if ($options['ppvMinimum'] && $CPM)
 							if ( $balance < $options['ppvMinimum'])
 							{
 								$requestShow = 0;
@@ -1686,11 +1693,15 @@ HTMLCODE;
 
 
 					if ($options['ppvPerformerPPM']>0) $welcome .= '<BR>' . 'Private show cost per minute for performer is:' . ' ' . $options['ppvPerformerPPM'];
-					if ($options['ppvPPM']>0) $welcome .= '<BR>' . 'Private show cost per minute for client is:' . ' ' . $options['ppvPPM'];
+
+					$CPM = get_post_meta( $postID, 'vw_costPerMinute', true );
+					if ($CPM == '') $CPM = $options['ppvPPM'];
+
+					if ($CPM) $welcome .= '<BR>' . 'Private show cost per minute for client is:' . ' ' . $CPM;
 
 					if ($options['ppvGraceTime']) $welcome .= '<BR>' . 'Charging starts after a grace time:' . ' ' . $options['ppvGraceTime'] . 's';
 
-					if (($options['ppvPPM']>0) && ($options['ppvRatio']>0)) $welcome .= '<BR>' . 'Private show earning per minute for performer is:' . ' ' . number_format($options['ppvPPM']*$options['ppvRatio'], 2, '.','');
+					if (($CPM>0) && ($options['ppvRatio']>0)) $welcome .= '<BR>' . 'Private show earning per minute for performer is:' . ' ' . number_format($CPM*$options['ppvRatio'], 2, '.','');
 
 
 					$snap='performer.png';
