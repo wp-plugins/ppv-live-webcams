@@ -3,7 +3,7 @@
 Plugin Name: Video PPV Live Webcams
 Plugin URI: http://www.videowhisper.com/?p=WordPress-PPV-Live-Webcams
 Description: VideoWhisper PPV Live Webcams
-Version: 1.5.3
+Version: 1.5.4
 Author: VideoWhisper.com
 Author URI: http://www.videowhisper.com/
 Contributors: videowhisper, VideoWhisper.com
@@ -1276,7 +1276,7 @@ HTMLCODE;
 			}
 		}
 
-
+		//! Feature Pages and Menus
 		function setupPages()
 		{
 			$options = get_option('VWliveWebcamsOptions');
@@ -1284,7 +1284,8 @@ HTMLCODE;
 
 			$pages = array(
 				'videowhisper_webcams' => 'Webcams',
-				'videowhisper_webcams_performer' => 'Performer Dashboard'
+				'videowhisper_webcams_performer' => 'Performer Dashboard',
+				'mycred_buy_form' => 'Buy Credits'
 			);
 
 			//create a menu and add pages
@@ -2725,7 +2726,7 @@ Enable webcam room features, accessible by performer.
 				if (class_exists( 'myCRED_buyCRED_Module' ) ) echo 'Detected'; else echo 'Not detected. Please install and activate myCRED with <a href="admin.php?page=myCRED_page_addons">buyCRED addon</a>!';
 ?>
 <p>
-myCRED <a href="admin.php?page=myCRED_page_addons">buyCRED addon</a> should be enabled and at least 1 <a href="admin.php?page=myCRED_page_gateways"> payment gateway</a> configured for users to be able to buy credits. Setup a page for users to buy credits with shortcode [mycred_buy_form]. </p>
+myCRED <a href="admin.php?page=myCRED_page_addons">buyCRED addon</a> should be enabled and at least 1 <a href="admin.php?page=myCRED_page_gateways">payment gateway</a> configured for users to be able to buy credits. Setup a page for users to buy credits with shortcode <a target="mycred" href="http://codex.mycred.me/shortcodes/mycred_buy_form/">[mycred_buy_form]</a>. </p>
 <h4>3) myCRED Sell Content Module</h4>
  <?php
 				if (class_exists( 'myCRED_Sell_Content_Module' ) ) echo 'Detected'; else echo 'Not detected. Please install and activate myCRED with <a href="admin.php?page=myCRED_page_addons">Sell Content addon</a>!';
